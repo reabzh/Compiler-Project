@@ -1,0 +1,202 @@
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+
+
+public class Compilers {
+
+
+     public static void main(String[] args) {
+        // TODO code application logic here
+        Scanner();
+    }
+
+
+    
+    static String token;
+    static Scanner inputCode;
+    static String Filename = "code.txt";
+  
+    static List keywords = new ArrayList();
+    static List delimiters = new ArrayList(); 
+    static List Operator = new ArrayList(); 
+    static List logialOP = new ArrayList(); 
+
+    
+    static List<String> tokens = new ArrayList<String>(); 
+    static List<String> type_ = new ArrayList<String>(); 
+    static List<String> val = new ArrayList<String>(); 
+    static List<String> symbol = new ArrayList<String>(); 
+
+    static String tokenCategory=""; 
+    static int line_ = 1; 
+    static int numberOflexemes = 0;
+    static int i =0;
+    static String number = "0123456789";
+    //static String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    
+    public static void Scanner() {
+        
+        keywords.add("start");  keywords.add("finish");  keywords.add("then");
+        keywords.add("if");     keywords.add("repeat");  keywords.add("var");
+        keywords.add("int");    keywords.add("float");   keywords.add("do");
+        keywords.add("read");   keywords.add("print");   keywords.add("void");
+        keywords.add("return"); keywords.add("boolean"); keywords.add("while");
+        keywords.add("public"); keywords.add("private"); keywords.add("try");
+        keywords.add("catch");  keywords.add("char");    keywords.add("this");
+        keywords.add("static"); keywords.add("else");    keywords.add("double");
+        keywords.add("String");
+       
+        delimiters.add(".");    delimiters.add("(");     delimiters.add(")");    
+        delimiters.add("{");    delimiters.add("}");     delimiters.add(";");
+        delimiters.add(",");    delimiters.add(":");
+       
+        Operator.add("+");      Operator.add("-");       Operator.add("*");      
+        Operator.add("/");      Operator.add("=");       Operator.add("%");
+       
+        logialOP.add("==");     logialOP.add("<=");      logialOP.add(">=");     
+        logialOP.add(">");      logialOP.add("<");       logialOP.add("=!");
+
+      
+        
+        try {
+            
+            inputCode = new Scanner(new File(Filename));
+            
+            while (inputCode.hasNext()){
+                token = inputCode.next();
+                char[] ch = token.toCharArray();
+                tokens.add(token);
+
+                
+                if(keywords.contains(token)){
+                    tokenCategory ="keyword";
+                } else if (delimiters.contains(token)) {
+                    tokenCategory = "Delimiter";
+                } else if (logialOP.contains(token)) {
+                    tokenCategory = "Logical Operation";
+                } else if (Operator.contains(token)) {
+                    tokenCategory = "Operator";
+                }else if(token.charAt(0)=='/' && token.charAt(1)=='/'){
+                    tokenCategory = "comment";
+                    token = token+inputCode.nextLine();
+                }else if(token.equalsIgnoreCase("true") || token.equalsIgnoreCase("false")){
+                    tokenCategory = "Boolean";
+                    SymbolTable(i);
+                
+                //Identifer
+                }else if(isIdentifier(ch)) {
+                        
+                    tokenCategory = "Identifer";
+                    if(keywords.contains(tokens.get(i-1))){
+                        symbol.add(tokens.get(i));
+                        type_.add(tokens.get(i-1));
+                        val.add("-");  
+                    }
+                    
+                //String   
+                }else if(ch[0]=='"' && ch[ch.length-1]=='"'&& token.length() <= 10){
+                    tokenCategory = "String";
+                    SymbolTable(i);
+                    
+                //int Digit 
+                }else if (isIntdigit(ch)){  
+                    tokenCategory = "int digit";
+                    SymbolTable(i);
+                
+                //double digit
+                }else if(isDoubledigit(ch)){
+                    tokenCategory = "double digit";
+                    SymbolTable(i);
+                }else {
+                    tokenCategory = "Error: Does not belong to language!! line :"+line_; 
+                }
+            
+                numberOflexemes++;
+                System.out.println("< " + token + " , " + tokenCategory + " >");
+                
+                if (token.endsWith(";")) {
+                  line_++; 
+                }
+                i++; 
+            } //while
+            
+            System.out.println("*************");
+            System.out.println("Number of Lexemes: "+numberOflexemes);
+            System.out.println("*************");
+            System.out.println("\t\t\t[Symbol Table]");
+            System.out.println("\tIdentifer\t\tType\t\t\tData");
+            for (int j = 0; j < symbol.size(); j++){
+                System.out.println("\t"+symbol.get(j) +"\t\t\t"+ type_.get(j)+"\t\t\t"+val.get(j));
+            } 
+            
+        }catch (FileNotFoundException ex) {
+            System.out.println("File code not found !!");
+        }  
+    }
+
+    public static boolean isIdentifier(char[] ch) {
+        if(((ch[0]>='a' && ch[0]<='z') || (ch[0]>='A' && ch[0]<='Z') )&& token.length() <= 8) {
+            //check is all token in range[AZaz0-1]
+            for(int j=1; j<ch.length;j++) {
+                if (!(ch[j]>='a' && ch[j]<='z') && !(ch[j]>='A' && ch[j]<='Z') && (number.indexOf(ch[j])==-1)) {
+                        return false;
+                }
+            }
+            return true;
+        } 
+        return false;
+        
+    }
+
+    
+    public static boolean isIntdigit(char[] ch) {
+        if (ch[0]=='-' || ch[0]=='+' || number.indexOf(ch[0])>=0 && token.length() <= 8){  
+            //check is all token is digit
+            for(int j=1; j<ch.length;j++) {
+                if((number.indexOf(ch[j])==-1)) {
+                    return false;
+                }
+            }
+            return true; 
+        }
+        else {
+            return false;
+        } 
+    }
+    
+    public static boolean isDoubledigit(char[] ch) {
+        int countDot=0;
+        if (ch[0]=='-' || ch[0]=='+' || number.indexOf(ch[0])>=0 && token.length() <= 8){  
+            //check is all token is digit
+            for(int j=1; j<ch.length;j++) {
+                if((number.indexOf(ch[j])==-1)) {
+                    if(ch[j]=='.'){
+                        countDot++;
+                    }else{
+                        return false;
+                    }
+                }
+            }
+        }
+        
+        if(countDot==1){
+            return true;
+        }else{
+            return false;
+        }
+    }
+    
+
+    public  static void SymbolTable( int i) {
+        if (tokens.get(i-1).equals("=") && symbol.contains(tokens.get(i-2))) {  
+
+            int p = symbol.indexOf(tokens.get(i-2));
+            val.remove(p);
+            val.add(p,tokens.get(i));
+        }
+    }
+}
